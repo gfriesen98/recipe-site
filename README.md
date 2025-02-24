@@ -4,6 +4,8 @@ a small site to help keep my recipes together with some added functionality to h
 
 # How to use
 
+**only test.js works right now**
+
 1. install and configure a maria/mysql database
 2. install nodejs/npm
 3. install nodemon `npm i -i nodemon`
