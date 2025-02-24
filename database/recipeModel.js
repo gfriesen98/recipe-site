@@ -381,7 +381,6 @@ async function deleteRecipe(recipeId) {
 module.exports = {
   getRecipe,
   getAllRecipes,
-  getAllRecipes2,
   getOnlyRecipe,
   getAllOnlyRecipes,
   createRecipe,

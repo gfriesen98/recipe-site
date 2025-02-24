@@ -2,7 +2,7 @@ const recipeModel = require('./database/recipeModel');
 (async () => {
   try {
 
-    const data2 = await recipeModel.getAllRecipes2();
+    const data2 = await recipeModel.getAllRecipes();
     console.log(data2);
 
     process.exit();
