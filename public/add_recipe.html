@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Recipe</title>
+    <style>
+        /* Basic styling for better readability */
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+
+        /* Navigation Menu Styles */
+        nav {
+            background-color: #f2f2f2;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        nav li {
+            float: left;
+        }
+
+        nav li a {
+            display: block;
+            color: #333;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        nav li a:hover {
+            background-color: #ddd;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Ensures padding doesn't affect width */
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #3e8e41;
+        }
+
+        .ingredient-row {
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="add_recipe.html">Add Recipe</a></li>
+        </ul>
+    </nav>
+
+    <h1>Add Recipe Ingredients</h1>
+
+    <form id="recipeForm">
+        <div id="ingredientsContainer">
+            <!-- Initial ingredient row -->
+            <div class="ingredient-row">
+                <label for="ingredientName">Ingredient Name:</label>
+                <input type="text" id="ingredientName" name="ingredientName" required>
+
+                <label for="amount">Amount:</label>
+                <input type="number" id="amount" name="amount" min="0" step="0.01" required>
+
+                <label for="unit">Unit:</label>
+                <select id="unit" name="unit">
+                    <option value="grams">Grams</option>
+                    <option value="pounds">Pounds</option>
+                    <option value="teaspoons">Teaspoons</option>
+                    <option value="tablespoons">Tablespoons</option>
+                    <option value="cups">Cups</option>
+                    <option value="ml">Milliliters (mL)</option>
+                    <option value="l">Liters (L)</option>
+                    <option value="oz">Ounces (oz)</option>
+                    <option value="fl_oz">Fluid Ounces (fl oz)</option>
+                    <option value="each">Each</option>
+                </select>
+                <button type="button" onclick="removeIngredient(this)">Remove</button>
+            </div>
+        </div>
+
+        <button type="button" onclick="addIngredient()">Add Ingredient</button>
+        <button type="submit">Submit Recipe</button>
+    </form>
+
+    <script>
+        function addIngredient() {
+            const container = document.getElementById('ingredientsContainer');
+            const newIngredient = document.createElement('div');
+            newIngredient.classList.add('ingredient-row');
+
+            newIngredient.innerHTML = `
+                <label for="ingredientName">Ingredient Name:</label>
+                <input type="text" name="ingredientName" required>
+
+                <label for="amount">Amount:</label>
+                <input type="number" name="amount" min="0" step="0.01" required>
+
+                <label for="unit">Unit:</label>
+                <select name="unit">
+                    <option value="grams">Grams</option>
+                    <option value="pounds">Pounds</option>
+                    <option value="teaspoons">Teaspoons</option>
+                    <option value="tablespoons">Tablespoons</option>
+                    <option value="cups">Cups</option>
+                    <option value="ml">Milliliters (mL)</option>
+                    <option value="l">Liters (L)</option>
+                    <option value="oz">Ounces (oz)</option>
+                    <option value="fl_oz">Fluid Ounces (fl oz)</option>
+                    <option value="each">Each</option>
+                </select>
+                <button type="button" onclick="removeIngredient(this)">Remove</button>
+            `;
+
+            container.appendChild(newIngredient);
+        }
+
+        function removeIngredient(element) {
+            element.parentNode.remove();
+        }
+
+        document.getElementById('recipeForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the form from actually submitting
+
+            // You would typically collect the data here and send it to your server
+            const ingredients = [];
+            const ingredientRows = document.querySelectorAll('.ingredient-row');
+
+            ingredientRows.forEach(row => {
+                const ingredientName = row.querySelector('input[name="ingredientName"]').value;
+                const amount = row.querySelector('input[name="amount"]').value;
+                const unit = row.querySelector('select[name="unit"]').value;
+
+                ingredients.push({
+                    name: ingredientName,
+                    amount: amount,
+                    unit: unit
+                });
+            });
+
+            console.log('Ingredients:', ingredients); // Display the collected data in the console
+
+            // In a real application, you would send this data to your server using fetch or XMLHttpRequest
+        });
+    </script>
+
+</body>
+</html>

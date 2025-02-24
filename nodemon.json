@@ -1,0 +1,9 @@
+{
+    "exec": "node --env-file=.env index.js",
+    "watch": [
+        "index.js",
+        ".env",
+        "./public"
+    ],
+    "ext": "js json html css"
+}
