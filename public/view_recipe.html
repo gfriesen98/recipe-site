@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Recipe</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+
+        nav {
+            background-color: #f2f2f2;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        nav li {
+            float: left;
+        }
+
+        nav li a {
+            display: block;
+            color: #333;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        nav li a:hover {
+            background-color: #ddd;
+        }
+
+        .recipe-container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        h1, h2 {
+            margin-bottom: 10px;
+        }
+
+        .ingredients-list {
+            list-style-type: disc;
+            margin-left: 20px;
+        }
+
+        .instructions-list {
+            list-style-type: decimal;
+            margin-left: 20px;
+        }
+
+        .note {
+            font-style: italic;
+            color: #777;
+        }
+        
+        .ingredient-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .ingredient-text {
+            flex: 1;
+        }
+        
+        .scaling-controls {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+        }
+        
+        .scaling-controls input {
+            width: 60px;
+            margin-right: 5px;
+            padding: 5px;
+        }
+        
+        .scaling-controls button {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .scaling-controls button:hover {
+            background-color: #45a049;
+        }
+        
+        .reset-scaling {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .reset-scaling:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="add_recipe.html">Add Recipe</a></li>
+            <li><a href="view_recipe.html">View Recipe</a></li>
+        </ul>
+    </nav>
+
+    <div class="recipe-container">
+        <h1 id="recipeName">Recipe Name</h1>
+        <p id="recipeDescription">Recipe Description</p>
+        <img id="recipeImage" src="" alt="Recipe Image" style="max-width: 100%; height: auto;">
+
+        <h2>Ingredients</h2>
+        <ul id="ingredientsList" class="ingredients-list">
+            <!-- Ingredients will be dynamically added here -->
+        </ul>
+        <button id="resetScaling" class="reset-scaling">Reset to Original Recipe</button>
+
+        <h2>Instructions</h2>
+        <ol id="instructionsList" class="instructions-list">
+            <!-- Instructions will be dynamically added here -->
+        </ol>
+    </div>
+
+    <script>
+        var recipeIngredients = null;
+        var originalRecipe = null;
+
+        
+        
+        // Function to scale recipe ingredients
+        function scaleRecipe(recipe, targetIngredient, targetAmount, targetUnit) {
+            // Define unit conversion factors (relative to a base unit in each category)
+            const unitConversions = {
+                // Volume conversions (base: ml)
+                volume: {
+                    ml: 1,
+                    l: 1000,
+                    tsp: 4.93,
+                    tbsp: 14.79,
+                    cup: 236.59,
+                    floz: 29.57,
+                    pint: 473.18,
+                    quart: 946.35,
+                    gallon: 3785.41
+                },
+                // Weight conversions (base: g)
+                weight: {
+                    g: 1,
+                    kg: 1000,
+                    oz: 28.35,
+                    lb: 453.59
+                },
+                // Count (no conversion needed)
+                count: {
+                    count: 1,
+                    piece: 1,
+                    slice: 1
+                }
+            };
+
+            // Categorize units by type
+            const unitCategories = {
+                volume: ['ml', 'l', 'tsp', 'tbsp', 'cup', 'floz', 'pint', 'quart', 'gallon'],
+                weight: ['g', 'kg', 'oz', 'lb'],
+                count: ['count', 'piece', 'slice']
+            };
+
+            // Function to determine the category of a unit
+            function getUnitCategory(unit) {
+                for (const category in unitCategories) {
+                    if (unitCategories[category].includes(unit.toLowerCase())) {
+                        return category;
+                    }
+                }
+                return null;
+            }
+
+            // Function to format the scaled amount nicely
+            function formatAmount(amount) {
+                // Round to 2 decimal places
+                const rounded = Math.round(amount * 100) / 100;
+                
+                // If it's a whole number, return it as an integer
+                if (rounded === Math.floor(rounded)) {
+                    return Math.floor(rounded);
+                }
+                
+                // If it's close to a common fraction, return it as a fraction
+                const fractions = {
+                    0.25: 0.25, // 1/4
+                    0.33: 0.33, // 1/3
+                    0.5: 0.5,   // 1/2
+                    0.67: 0.67, // 2/3
+                    0.75: 0.75  // 3/4
+                };
+                
+                for (const [decimal, fraction] of Object.entries(fractions)) {
+                    if (Math.abs(rounded - parseFloat(decimal)) < 0.05) {
+                        return parseFloat(fraction);
+                    }
+                }
+                
+                // Otherwise return the decimal
+                return rounded;
+            }
+
+            // Find the target ingredient in the recipe
+            const targetIngredientObj = recipe.find(item => 
+                item.name.toLowerCase() === targetIngredient.toLowerCase()
+            );
+
+            // Check if the target ingredient exists in the recipe
+            if (!targetIngredientObj) {
+                throw new Error(`Target ingredient "${targetIngredient}" not found in recipe`);
+            }
+
+            // Get the category of the target ingredient's unit
+            const targetCategory = getUnitCategory(targetIngredientObj.unit);
+            const providedTargetCategory = getUnitCategory(targetUnit);
+
+            // Check if the units are compatible
+            if (targetCategory !== providedTargetCategory) {
+                throw new Error(`Cannot convert between ${targetCategory} and ${providedTargetCategory}`);
+            }
+
+            // Calculate the scaling factor
+            const originalAmountInBaseUnit = targetIngredientObj.amount * 
+                unitConversions[targetCategory][targetIngredientObj.unit.toLowerCase()];
+            const targetAmountInBaseUnit = targetAmount * 
+                unitConversions[targetCategory][targetUnit.toLowerCase()];
+            const scalingFactor = targetAmountInBaseUnit / originalAmountInBaseUnit;
+
+            // Scale each ingredient
+            return recipe.map(ingredient => {
+                // Create a new object to avoid modifying the original
+                const scaledIngredient = { ...ingredient };
+                
+                // Scale the amount
+                scaledIngredient.amount = formatAmount(ingredient.amount * scalingFactor);
+                
+                return scaledIngredient;
+            });
+        }
+        
+        // Function to fetch the recipe data from the server
+        async function fetchRecipe() {
+            // Get the recipe ID from the URL (e.g., view_recipe.html?id=123)
+            const urlParams = new URLSearchParams(window.location.search);
+            const recipeId = urlParams.get('id');
+
+            if (!recipeId) {
+                alert('Recipe ID is missing from the URL.');
+                return;
+            }
+
+            try {
+                // Replace with your actual API endpoint
+                const apiUrl = `/api/recipes/${recipeId}`;
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const recipe = await response.json();
+                originalRecipe = JSON.parse(JSON.stringify(recipe)); // Deep copy
+                recipeIngredients = recipe.ingredients;
+                displayRecipe(recipe);
+            } catch (error) {
+                console.error('Error fetching recipe:', error);
+                alert('Error loading recipe.');
+            }
+        }
+
+        // Function to display the recipe data on the page
+        function displayRecipe(recipe) {
+            document.getElementById('recipeName').textContent = recipe.name;
+            document.getElementById('recipeDescription').textContent = recipe.description;
+
+            const recipeImage = document.getElementById('recipeImage');
+            if (recipe.image_url) {
+                recipeImage.src = recipe.image_url;
+                recipeImage.alt = recipe.name;
+            } else {
+                recipeImage.style.display = 'none'; // Hide the image if no URL is available
+            }
+
+            const ingredientsList = document.getElementById('ingredientsList');
+            ingredientsList.innerHTML = ''; // Clear any existing content
+            
+            recipe.ingredients.forEach((ingredient, index) => {
+                const listItem = document.createElement('li');
+                listItem.className = 'ingredient-item';
+                
+                // Create the ingredient text span
+                const ingredientText = document.createElement('span');
+                ingredientText.className = 'ingredient-text';
+                ingredientText.textContent = `${ingredient.name} - ${ingredient.amount} ${ingredient.unit}`;
+                listItem.appendChild(ingredientText);
+                
+                // Create the scaling controls
+                const scalingControls = document.createElement('div');
+                scalingControls.className = 'scaling-controls';
+                
+                // Create the input for the new amount
+                const amountInput = document.createElement('input');
+                amountInput.type = 'number';
+                amountInput.min = '0';
+                amountInput.step = '0.1';
+                amountInput.value = ingredient.amount;
+                amountInput.id = `ingredient-amount-${index}`;
+                scalingControls.appendChild(amountInput);
+                
+                // Create the unit display
+                const unitSpan = document.createElement('span');
+                unitSpan.textContent = ingredient.unit;
+                scalingControls.appendChild(unitSpan);
+                
+                // Create the scale button
+                const scaleButton = document.createElement('button');
+                scaleButton.textContent = 'Scale';
+                scaleButton.onclick = function() {
+                    const newAmount = parseFloat(amountInput.value);
+                    if (isNaN(newAmount) || newAmount <= 0) {
+                        alert('Please enter a valid amount greater than 0.');
+                        return;
+                    }
+                    
+                    try {
+                        const scaledIngredients = scaleRecipe(
+                            recipe.ingredients, 
+                            ingredient.name, 
+                            newAmount, 
+                            ingredient.unit
+                        );
+                        
+                        // Update the recipe with scaled ingredients
+                        recipe.ingredients = scaledIngredients;
+                        
+                        // Redisplay the recipe
+                        displayRecipe(recipe);
+                    } catch (error) {
+                        alert(`Error scaling recipe: ${error.message}`);
+                    }
+                };
+                scalingControls.appendChild(scaleButton);
+                
+                listItem.appendChild(scalingControls);
+                ingredientsList.appendChild(listItem);
+            });
+
+            const instructionsList = document.getElementById('instructionsList');
+            instructionsList.innerHTML = ''; // Clear any existing content
+            recipe.instructions.forEach(step => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = step.content; // Use innerHTML to render HTML content
+                instructionsList.appendChild(listItem);
+            });
+            
+            // Set up the reset button
+            document.getElementById('resetScaling').onclick = function() {
+                displayRecipe(JSON.parse(JSON.stringify(originalRecipe))); // Deep copy
+            };
+        }
+
+        // Function to format fractions for display
+        function formatFractionForDisplay(amount) {
+            if (amount === 0.25) return '¼';
+            if (amount === 0.33) return '⅓';
+            if (amount === 0.5) return '½';
+            if (amount === 0.67) return '⅔';
+            if (amount === 0.75) return '¾';
+            return amount;
+        }
+
+        // Call fetchRecipe when the page loads
+        window.addEventListener('load', fetchRecipe);
+    </script>
+
+</body>
+</html>

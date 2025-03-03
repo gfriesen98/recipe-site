@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Add Recipe</title>
     <style>
         /* Basic styling for better readability */
@@ -53,18 +54,20 @@
 
         input[type="text"],
         input[type="number"],
-        select {
+        select,
+        textarea {
             width: 100%;
             padding: 8px;
             margin-top: 5px;
             margin-bottom: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            box-sizing: border-box; /* Ensures padding doesn't affect width */
+            box-sizing: border-box;
+            /* Ensures padding doesn't affect width */
         }
 
         button {
-            background-color: #4CAF50;
+            background-color: #4caf50;
             color: white;
             padding: 10px 15px;
             border: none;
@@ -82,10 +85,52 @@
             margin-bottom: 10px;
             border-radius: 4px;
         }
+
+        .step {
+            margin-bottom: 10px;
+        }
+
+        /* Hide the second step by default */
+        #step2 {
+            display: none;
+        }
+
+        .category-checkbox {
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+
+        /* Style for the datalist */
+        .category-suggestion {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 5px 10px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            display: inline-block;
+            color: black;
+        }
+
+        .category-suggestion:hover {
+            background-color: #e0e0e0;
+        }
+
+        #selectedCategoriesDisplay {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
     </style>
 </head>
-<body>
 
+<body>
     <nav>
         <ul>
             <li><a href="index.html">Home</a></li>
@@ -93,44 +138,172 @@
         </ul>
     </nav>
 
-    <h1>Add Recipe Ingredients</h1>
+    <h1>Add Recipe</h1>
 
     <form id="recipeForm">
-        <div id="ingredientsContainer">
-            <!-- Initial ingredient row -->
-            <div class="ingredient-row">
-                <label for="ingredientName">Ingredient Name:</label>
-                <input type="text" id="ingredientName" name="ingredientName" required>
+        <div id="step1">
+            <label for="recipeTitle">Recipe Title:</label>
+            <input type="text" id="recipeTitle" name="recipeTitle" required />
 
-                <label for="amount">Amount:</label>
-                <input type="number" id="amount" name="amount" min="0" step="0.01" required>
+            <label for="recipeDescription">Recipe Description:</label>
+            <textarea id="recipeDescription" name="recipeDescription" rows="4"></textarea>
 
-                <label for="unit">Unit:</label>
-                <select id="unit" name="unit">
-                    <option value="grams">Grams</option>
-                    <option value="pounds">Pounds</option>
-                    <option value="teaspoons">Teaspoons</option>
-                    <option value="tablespoons">Tablespoons</option>
-                    <option value="cups">Cups</option>
-                    <option value="ml">Milliliters (mL)</option>
-                    <option value="l">Liters (L)</option>
-                    <option value="oz">Ounces (oz)</option>
-                    <option value="fl_oz">Fluid Ounces (fl oz)</option>
-                    <option value="each">Each</option>
-                </select>
-                <button type="button" onclick="removeIngredient(this)">Remove</button>
+            <label for="recipeImage">Recipe Image:</label>
+            <input type="file" id="recipeImage" name="recipeImage" accept="image/*" />
+
+            <label for="recipeCategories">Categories:</label>
+            <input type="text" id="categorySearch" name="recipeCategories" placeholder="Click to select categories" />
+            <div id="categoriesContainer">
+                <!-- Category suggestions will be dynamically added here -->
             </div>
+            <label for="selectedCategoriesDisplay">Selected Categories:</label>
+            <input type="text" id="selectedCategoriesDisplay" name="selectedCategoriesDisplay" disabled readonly />
+
+            <h2>Ingredients</h2>
+            <div id="ingredientsContainer">
+                <!-- Initial ingredient row -->
+                <div class="ingredient-row">
+                    <label for="ingredientName">Ingredient Name:</label>
+                    <input type="text" id="ingredientName" name="ingredientName" required />
+
+                    <label for="amount">Amount:</label>
+                    <input type="number" id="amount" name="amount" min="0" step="0.01" required />
+
+                    <label for="unit">Unit:</label>
+                    <select id="unit" name="unit">
+                        <option value="grams">Grams</option>
+                        <option value="pounds">Pounds</option>
+                        <option value="teaspoons">Teaspoons</option>
+                        <option value="tablespoons">Tablespoons</option>
+                        <option value="cups">Cups</option>
+                        <option value="ml">Milliliters (mL)</option>
+                        <option value="l">Liters (L)</option>
+                        <option value="oz">Ounces (oz)</option>
+                        <option value="fl_oz">Fluid Ounces (fl oz)</option>
+                        <option value="each">Each</option>
+                    </select>
+                    <button type="button" onclick="removeIngredient(this)">Remove</button>
+                </div>
+            </div>
+
+            <button type="button" onclick="addIngredient()">Add Ingredient</button>
+            <button type="button" onclick="nextStep()">Next</button>
         </div>
 
-        <button type="button" onclick="addIngredient()">Add Ingredient</button>
-        <button type="submit">Submit Recipe</button>
+        <div id="step2">
+            <h2>Instructions</h2>
+            <div id="instructionsContainer">
+                <div class="step">
+                    <label for="instruction">Step 1:</label>
+                    <textarea id="instruction" name="instruction" required></textarea>
+                    <button type="button" onclick="removeStep(this)">Remove</button>
+                </div>
+            </div>
+            <button type="button" onclick="addStep()">Add Step</button>
+            <button type="button" onclick="previousStep()">Previous</button>
+            <button type="submit">Submit Recipe</button>
+        </div>
     </form>
 
     <script>
+        let stepCount = 1;
+
+        function nextStep() {
+            document.getElementById("step1").style.display = "none";
+            document.getElementById("step2").style.display = "block";
+        }
+
+        function previousStep() {
+            document.getElementById("step2").style.display = "none";
+            document.getElementById("step1").style.display = "block";
+        }
+
+        async function fetchCategories() {
+            try {
+                const res = await fetch('/api/recipe-categories');
+                const { categories } = await res.json();
+                initializeCategorySearch(categories);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function initializeCategorySearch(categories) {
+            const categorySearchInput = document.getElementById("categorySearch");
+            const categoriesContainer = document.getElementById("categoriesContainer");
+            const selectedCategoriesDisplay = document.getElementById("selectedCategoriesDisplay");
+            let selectedCategories = [];
+
+            // Function to update the displayed categories
+            function updateDisplayedCategories() {
+                categoriesContainer.innerHTML = "";
+                const searchTerm = categorySearchInput.value.toLowerCase();
+
+                categories.forEach(category => {
+                    if (category.name.toLowerCase().includes(searchTerm)) {
+                        const button = document.createElement("button");
+                        button.type = "button";
+                        button.textContent = category.name;
+                        button.classList.add("category-suggestion");
+                        button.setAttribute('_id', category.id);
+
+                        button.addEventListener("click", function () {
+                            if (!selectedCategories.includes(category)) {
+                                selectedCategories.push(category);
+                                updateSelectedCategoriesDisplay();
+                            }
+                        });
+
+                        categoriesContainer.appendChild(button);
+                    }
+                });
+            }
+
+            // Function to update the selected categories display
+            function updateSelectedCategoriesDisplay() {
+                
+                selectedCategoriesDisplay.value = selectedCategories.map(n => n.name).join(',');
+                selectedCategoriesDisplay.setAttribute('_ids', selectedCategories.map(n => n.id).join(','));
+            }
+
+            // Event listener for the search input
+            categorySearchInput.addEventListener("input", updateDisplayedCategories);
+
+            // Initial display of categories
+            // updateDisplayedCategories();
+        }
+
+        function displayCategories(categories) {
+            const categoriesContainer = document.getElementById("categoriesContainer");
+            const categoryInput = document.getElementById("recipeCategories");
+            let selectedCategories = [];
+
+            categories.forEach(category => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.textContent = category.name;
+                button.classList.add("category-suggestion");
+
+                button.addEventListener("click", function () {
+                    if (!selectedCategories.includes(category)) {
+                        selectedCategories.push(category);
+                    }
+                    categoryInput.value = selectedCategories.join(", ");
+                });
+
+                categoriesContainer.appendChild(button);
+            });
+
+            // Initialize the input field with existing categories (if any)
+            if (categoryInput.value) {
+                selectedCategories = categoryInput.value.split(",").map(s => s.trim()).filter(s => s !== "");
+            }
+        }
+
         function addIngredient() {
-            const container = document.getElementById('ingredientsContainer');
-            const newIngredient = document.createElement('div');
-            newIngredient.classList.add('ingredient-row');
+            const container = document.getElementById("ingredientsContainer");
+            const newIngredient = document.createElement("div");
+            newIngredient.classList.add("ingredient-row");
 
             newIngredient.innerHTML = `
                 <label for="ingredientName">Ingredient Name:</label>
@@ -162,30 +335,104 @@
             element.parentNode.remove();
         }
 
-        document.getElementById('recipeForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent the form from actually submitting
+        function addStep() {
+            stepCount++;
+            const container = document.getElementById("instructionsContainer");
+            const newStep = document.createElement("div");
+            newStep.classList.add("step");
 
-            // You would typically collect the data here and send it to your server
-            const ingredients = [];
-            const ingredientRows = document.querySelectorAll('.ingredient-row');
+            newStep.innerHTML = `
+                <label for="instruction">Step ${stepCount}:</label>
+                <textarea name="instruction" required></textarea>
+                <button type="button" onclick="removeStep(this)">Remove</button>
+            `;
 
-            ingredientRows.forEach(row => {
-                const ingredientName = row.querySelector('input[name="ingredientName"]').value;
-                const amount = row.querySelector('input[name="amount"]').value;
-                const unit = row.querySelector('select[name="unit"]').value;
+            container.appendChild(newStep);
+        }
 
-                ingredients.push({
-                    name: ingredientName,
-                    amount: amount,
-                    unit: unit
-                });
-            });
+        function removeStep(element) {
+            element.parentNode.remove();
+        }
 
-            console.log('Ingredients:', ingredients); // Display the collected data in the console
-
-            // In a real application, you would send this data to your server using fetch or XMLHttpRequest
+        window.addEventListener('load', (event) => {
+            fetchCategories();
         });
-    </script>
 
+        document
+            .getElementById("recipeForm")
+            .addEventListener("submit", async function (event) {
+                event.preventDefault(); // Prevent the form from actually submitting
+
+                // Collect the data from step 1
+                const recipeTitle = document.getElementById("recipeTitle").value;
+                const recipeDescription = document.getElementById("recipeDescription").value;
+                const recipeImage = document.getElementById("recipeImage").files[0]; // Get the selected file
+
+                const selectedCategories = document.getElementById("selectedCategoriesDisplay");
+                const categories = selectedCategories.getAttribute('_ids')
+                    ? [...new Set(selectedCategories.getAttribute('_ids').split(','))]
+                    : [];
+
+                const ingredients = [];
+                const ingredientRows = document.querySelectorAll(".ingredient-row");
+
+                ingredientRows.forEach((row) => {
+                    const ingredientName = row.querySelector(
+                        'input[name="ingredientName"]'
+                    ).value;
+                    const amount = row.querySelector('input[name="amount"]').value;
+                    const unit = row.querySelector('select[name="unit"]').value;
+
+                    ingredients.push({
+                        name: ingredientName,
+                        amount: amount,
+                        unit: unit,
+                    });
+                });
+
+                // Collect the data from step 2
+                const instructions = [];
+                const instructionSteps = document.querySelectorAll(".step textarea");
+                instructionSteps.forEach((step) => {
+                    instructions.push({
+                        type: "ordered",
+                        content: step.value,
+                    });
+                });
+
+                // Log the data (replace with your actual submission logic)
+                console.log("Recipe Title:", recipeTitle);
+                console.log("Recipe Description:", recipeDescription);
+                console.log("Recipe Categories", categories);
+                console.log("Recipe Image:", recipeImage);
+                console.log("Ingredients:", ingredients);
+                console.log("Instructions:", instructions);
+
+                // In a real application, you would send this data to your server using fetch or XMLHttpRequest
+                // You'll likely need to use FormData to send the image file
+                const formData = new FormData();
+                formData.append('recipeTitle', recipeTitle);
+                formData.append('recipeDescription', recipeDescription);
+                formData.append('ingredients', JSON.stringify(ingredients));
+                formData.append('instructions', JSON.stringify(instructions));
+                formData.append('categories', JSON.stringify(categories));
+                if (recipeImage) formData.append('recipeImage', recipeImage);
+                try {
+                    const res = await fetch('/api/recipes/new', {method: "POST", body: formData});
+                    const data = await res.json();
+                    if (res.status === 200) {
+                        window.location.href = data.url;   
+                    } else {
+                        console.error(data);
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+                // fetch('/api/recipes/new', { method: 'POST', body: formData })
+                //     .then(res => res.json()).then()
+                //     .catch(error => { console.error('Error: ', error) });
+            });
+    </script>
 </body>
+
 </html>

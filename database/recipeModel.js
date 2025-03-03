@@ -2,7 +2,7 @@ const pool = require("./db");
 
 /**
  * Retrieves a recipe including its associated ingredients
- * 
+ *
  * @async
  * @function getRecipe
  * @param {number} recipeId - The id of the recipe to retrieve
@@ -11,140 +11,82 @@ const pool = require("./db");
  */
 async function getRecipe(recipeId) {
   try {
-    const [recipeRows] = await pool.execute(
+    const [recipeRows] = await pool.query(
       `SELECT * FROM recipes WHERE id = ?`,
       [recipeId]
     );
 
-    if (recipeRows.length === 0)
-      return null;
+    if (recipeRows.length === 0) return null;
 
     const recipe = recipeRows[0];
 
-    const [ingredientRows] = await pool.execute(
-      'SELECT * FROM ingredients WHERE recipe_id = ?',
+    const [ingredientRows] = await pool.query(
+      "SELECT * FROM ingredients WHERE recipe_id = ?",
       [recipeId]
     );
 
     recipe.ingredients = ingredientRows;
 
-    const [categoryRows] = await pool.execute(
-      'SELECT category_id FROM recipe_categories WHERE recipe_id = ?',
+    const [categoryRows] = await pool.query(
+      "SELECT category_id FROM recipe_categories WHERE recipe_id = ?",
       [recipeId]
     );
 
-    recipe.categoryIds = categoryRows.map(row => row.category_id);
+    recipe.categoryIds = categoryRows.map((row) => row.category_id);
     return recipe;
   } catch (error) {
-    console.error('Error getting recipe:', error);
+    console.error("Error getting recipe:", error);
     throw error;
+  } finally {
   }
 }
 
-// async function getAllRecipes() {
-//   try {
-//     const [recipeRows] = await pool.execute('SELECT * FROM recipes');
-//     const recipes = [];
-//     console.log(recipeRows)
-//     if (recipes.length === 0) return recipes;
-
-//     for (const recipe of recipeRows) {
-//       const [ingredientRows] = await pool.execute(
-//         'SELECT * FROM ingredients WHERE recipe_id = ?',
-//         [recipe.id]
-//       );
-//       console.log(ingredientRows);
-//       recipe.ingredients = ingredientRows;
-
-//       const [categoryRows] = await pool.execute(
-//         'SELECT category_id FROM recipe_categories WHERE recipe_id = ?',
-//         [recipe.id]
-//       );
-//       console.log(categoryRows);
-//       recipe.categoryIds = categoryRows.map(row => row.category_id);
-
-//       recipes.push(recipe);
-//     }
-
-//     return recipes;
-//   } catch (error) {
-//     console.error('Error getting all recipes:', error);
-//     throw error;
-//   }
-// }
-
 /**
  * Retrieves all recipes from the database including associated ingredients and category_ids
- * 
+ *
  * @async
  * @function getAllRecipes
  * @returns {Promies<Array<object>>} A promise that resolves with an array of recipe objects or empty array
  * @throws {Error}
  */
 async function getAllRecipes() {
+  const connection = await pool.getConnection();
+
   try {
-      const [rows] = await pool.execute(
-          `SELECT
-              r.id AS recipe_id,
-              r.name AS recipe_name,
-              r.description,
-              r.instructions,
-              r.image_url,
-              i.id AS ingredient_id,
-              i.name AS ingredient_name,
-              i.amount,
-              i.unit,
-              rc.category_id
-          FROM recipes r
-          LEFT JOIN ingredients i ON r.id = i.recipe_id
-          LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id`
-      );
+    const [recipeRows] = await connection.query("SELECT * FROM recipes");
+    const recipes = [];
 
-      const recipesMap = new Map();
+    if (recipeRows.length === 0) return recipes;
 
-      for (const row of rows) {
-          let recipe = recipesMap.get(row.recipe_id);
+    for (const recipe of recipeRows) {
+      const [ingredientRows, categoryRows] = await Promise.all([
+        connection.query("SELECT * FROM ingredients WHERE recipe_id = ?", [
+          recipe.id,
+        ]),
+        connection.query(
+          "SELECT category_id FROM recipe_categories WHERE recipe_id = ?",
+          [recipe.id]
+        ),
+      ]);
 
-          if (!recipe) {
-              recipe = {
-                  id: row.recipe_id,
-                  name: row.recipe_name,
-                  description: row.description,
-                  instructions: row.instructions,
-                  image_url: row.image_url,
-                  ingredients: [],
-                  categoryIds: []
-              };
-              recipesMap.set(row.recipe_id, recipe);
-          }
+      recipe.ingredients = ingredientRows[0];
+      recipe.categoryIds = categoryRows[0].map((row) => row.category_id);
 
-          if (row.ingredient_id) {
-              recipe.ingredients.push({
-                  id: row.ingredient_id,
-                  name: row.ingredient_name,
-                  amount: row.amount,
-                  unit: row.unit
-              });
-          }
+      recipes.push(recipe);
+    }
 
-          if (row.category_id) {
-              if (!recipe.categoryIds.includes(row.category_id)) {
-                  recipe.categoryIds.push(row.category_id);
-              }
-          }
-      }
-
-      return Array.from(recipesMap.values());
+    return recipes;
   } catch (error) {
-      console.error('Error getting all recipes:', error);
-      throw error;
+    console.error("Error getting all recipes:", error);
+    throw error;
+  } finally {
+    connection.release();
   }
 }
 
-
 /**
  * Retrieves only the recipe and categories (if exist) without the ingredients
- * 
+ *
  * @async
  * @function getOnlyRecipe
  * @param {number} recipeId - The recipe id
@@ -153,8 +95,8 @@ async function getAllRecipes() {
  */
 async function getOnlyRecipe(recipeId) {
   try {
-    const [recipeRows] = await pool.execute(
-      'SELECT * FROM recipes WHERE id = ?',
+    const [recipeRows] = await pool.query(
+      "SELECT * FROM recipes WHERE id = ?",
       [recipeId]
     );
 
@@ -162,22 +104,22 @@ async function getOnlyRecipe(recipeId) {
 
     const recipe = recipeRows[0];
 
-    const [categoryRows] = await pool.execute(
-      'SELECT category_id FROM recipe_categories WHERE recipe_id = ?',
+    const [categoryRows] = await pool.query(
+      "SELECT category_id FROM recipe_categories WHERE recipe_id = ?",
       [recipeId]
     );
 
-    recipe.categoryIds = categoryRows.map(row => row.category_id);
+    recipe.categoryIds = categoryRows.map((row) => row.category_id);
     return recipe;
   } catch (error) {
-    console.error('Error getting recipe:', error);
+    console.error("Error getting recipe:", error);
     throw error;
   }
 }
 
 /**
  * Retrieves all recipes from the database with category_ids if exists
- * 
+ *
  * @async
  * @function getAllRecipes
  * @returns {Promies<Array<object>>} A promise that resolves with an array of recipe objects or empty array
@@ -185,25 +127,25 @@ async function getOnlyRecipe(recipeId) {
  */
 async function getAllOnlyRecipes() {
   try {
-    const [recipeRows] = await pool.execute('SELECT * FROM recipes');
+    const [recipeRows] = await pool.query("SELECT * FROM recipes");
     const recipes = [];
-    
+
     if (recipes.length === 0) return recipes;
 
     for (const recipe of recipeRows) {
-      const [categoryRows] = await pool.execute(
-        'SELECT category_id FROM recipe_categories WHERE recipe_id = ?',
+      const [categoryRows] = await pool.query(
+        "SELECT category_id FROM recipe_categories WHERE recipe_id = ?",
         [recipe.id]
       );
 
-      recipe.categoryIds = categoryRows.map(row => row.category_id);
+      recipe.categoryIds = categoryRows.map((row) => row.category_id);
 
       recipes.push(recipe);
     }
 
     return recipes;
   } catch (error) {
-    console.error('Error getting all recipes:', error);
+    console.error("Error getting all recipes:", error);
     throw error;
   }
 }
@@ -238,7 +180,7 @@ async function createRecipe(recipeData) {
       categoryIds,
     } = recipeData;
 
-    const [recipeResult] = await connection.execute(
+    const [recipeResult] = await connection.query(
       `INSERT INTO recipes (name, description, instructions, image_url) VALUES (?, ?, ?, ?)`,
       [name, description, JSON.stringify(instructions), image_url]
     );
@@ -247,7 +189,7 @@ async function createRecipe(recipeData) {
 
     for (const ingredient of ingredients) {
       const { name: ingredientName, amount, unit } = ingredient;
-      await connection.execute(
+      await connection.query(
         `INSERT INTO ingredients (recipe_id, name, amount, unit) VALUES (?, ?, ?, ?)`,
         [recipeId, ingredientName, amount, unit]
       );
@@ -256,7 +198,7 @@ async function createRecipe(recipeData) {
 
     if (categoryIds && categoryIds.length > 0) {
       for (const categoryId of categoryIds) {
-        await connection.execute(
+        await connection.query(
           `INSERT INTO recipe_categories (recipe_id, category_id) VALUES (?, ?)`,
           [recipeId, categoryId]
         );
@@ -300,39 +242,38 @@ async function updateRecipe(recipeId, recipeData) {
       instructions,
       image_url,
       ingredients,
-      categoryIds
+      categoryIds,
     } = recipeData;
 
-    const [recipeResult] = await connection.execute(
-      'UPDATE recipes SET name = ?, description = ?, instructions = ?, image_url = ? WHERE id = ?',
+    const [recipeResult] = await connection.query(
+      "UPDATE recipes SET name = ?, description = ?, instructions = ?, image_url = ? WHERE id = ?",
       [name, description, JSON.stringify(instructions), image_url, recipeId]
     );
 
     // delete existing ingredients
-    await connection.execute(
-      'DELETE FROM ingredients WHERE recipe_id = ?',
-      [recipeId]
-    );
+    await connection.query("DELETE FROM ingredients WHERE recipe_id = ?", [
+      recipeId,
+    ]);
 
     // add new ingredients
     for (const ingredient of ingredients) {
-      const {name: ingredientName, amount, unit} = ingredient;
-      await connection.execute(
-        'INSERT INTO ingredients (recipe_id, name, amount, unit) VALUES (?, ?, ?, ?)',
+      const { name: ingredientName, amount, unit } = ingredient;
+      await connection.query(
+        "INSERT INTO ingredients (recipe_id, name, amount, unit) VALUES (?, ?, ?, ?)",
         [recipeId, ingredientName, amount, unit]
       );
     }
 
     // delete existing recipe categories
     if (categoryIds && categoryIds.length > 0) {
-      await connection.execute(
-        'DELETE FROM recipe_categories WHERE recipe_id = ?',
+      await connection.query(
+        "DELETE FROM recipe_categories WHERE recipe_id = ?",
         [recipeId]
       );
 
       for (const categoryId of categoryIds) {
-        await connection.execute(
-          'INSERT INTO recipe_categories (recipe_id, category_id) VALUES (?, ?)',
+        await connection.query(
+          "INSERT INTO recipe_categories (recipe_id, category_id) VALUES (?, ?)",
           [recipeId, categoryId]
         );
       }
@@ -342,7 +283,7 @@ async function updateRecipe(recipeId, recipeData) {
     return recipeResult.affectedRows;
   } catch (error) {
     await connection.rollback();
-    console.error('Error updating recipe:', error);
+    console.error("Error updating recipe:", error);
     throw error;
   } finally {
     connection.release();
@@ -363,15 +304,15 @@ async function deleteRecipe(recipeId) {
   try {
     await connection.beginTransaction();
 
-    const [recipeResult] = await connection.execute(
-      'DELETE FROM recipes WHERE id = ?',
+    const [recipeResult] = await connection.query(
+      "DELETE FROM recipes WHERE id = ?",
       [recipeId]
     );
 
     await connection.commit();
     return recipeResult.affectedRows;
   } catch (error) {
-    console.error('Error deleting recipe:', error);
+    console.error("Error deleting recipe:", error);
     throw error;
   } finally {
     connection.release();
@@ -385,5 +326,5 @@ module.exports = {
   getAllOnlyRecipes,
   createRecipe,
   updateRecipe,
-  deleteRecipe
+  deleteRecipe,
 };
