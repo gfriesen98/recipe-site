@@ -120,26 +120,26 @@
 
     <nav>
         <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="add_recipe.html">Add Recipe</a></li>
-            <li><a href="view_recipe.html">View Recipe</a></li>
+            <li><a href="/">Home</a></li>
+            <li><a href="/recipe/new">New Recipe</a></li>
         </ul>
     </nav>
 
     <div class="recipe-container">
-        <h1 id="recipeName">Recipe Name</h1>
-        <p id="recipeDescription">Recipe Description</p>
-        <img id="recipeImage" src="" alt="Recipe Image" style="max-width: 100%; height: auto;">
-
+        <h1 id="recipeName">{recipeName}</h1>
+        <p id="recipeDescription">{recipeDescription}</p>
+        {recipeImage}
         <h2>Ingredients</h2>
         <ul id="ingredientsList" class="ingredients-list">
             <!-- Ingredients will be dynamically added here -->
+             {ingredients}
         </ul>
         <button id="resetScaling" class="reset-scaling">Reset to Original Recipe</button>
 
         <h2>Instructions</h2>
         <ol id="instructionsList" class="instructions-list">
             <!-- Instructions will be dynamically added here -->
+             {instructions}
         </ol>
     </div>
 
@@ -396,7 +396,7 @@
         }
 
         // Call fetchRecipe when the page loads
-        window.addEventListener('load', fetchRecipe);
+        // window.addEventListener('load', fetchRecipe);
     </script>
 
 </body>

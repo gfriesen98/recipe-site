@@ -133,8 +133,7 @@
 <body>
     <nav>
         <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="add_recipe.html">Add Recipe</a></li>
+            <li><a href="/">Home</a></li>
         </ul>
     </nav>
 
@@ -207,6 +206,7 @@
 
     <script>
         let stepCount = 1;
+        const categories = {categories}; // filled in from server on load
 
         function nextStep() {
             document.getElementById("step1").style.display = "none";
@@ -216,16 +216,6 @@
         function previousStep() {
             document.getElementById("step2").style.display = "none";
             document.getElementById("step1").style.display = "block";
-        }
-
-        async function fetchCategories() {
-            try {
-                const res = await fetch('/api/recipe-categories');
-                const { categories } = await res.json();
-                initializeCategorySearch(categories);
-            } catch (error) {
-                console.error(error);
-            }
         }
 
         function initializeCategorySearch(categories) {
@@ -355,7 +345,7 @@
         }
 
         window.addEventListener('load', (event) => {
-            fetchCategories();
+            initializeCategorySearch(categories);
         });
 
         document
@@ -408,8 +398,6 @@
                 console.log("Ingredients:", ingredients);
                 console.log("Instructions:", instructions);
 
-                // In a real application, you would send this data to your server using fetch or XMLHttpRequest
-                // You'll likely need to use FormData to send the image file
                 const formData = new FormData();
                 formData.append('recipeTitle', recipeTitle);
                 formData.append('recipeDescription', recipeDescription);
@@ -419,18 +407,22 @@
                 if (recipeImage) formData.append('recipeImage', recipeImage);
                 try {
                     const res = await fetch('/api/recipes/new', {method: "POST", body: formData});
+                    if (res.redirected) {
+                        window.location.href = res.url;
+                        return;
+                    }
+
                     const data = await res.json();
-                    if (res.status === 200) {
-                        window.location.href = data.url;   
+                    if (res.ok) {
+                        console.log("Something happened and we didnt redirect");
+                        console.error(`Response: `, data);
                     } else {
+                        console.error("An error occurred");
                         console.error(data);
                     }
                 } catch (error) {
                     console.error(error);
                 }
-                // fetch('/api/recipes/new', { method: 'POST', body: formData })
-                //     .then(res => res.json()).then()
-                //     .catch(error => { console.error('Error: ', error) });
             });
     </script>
 </body>
